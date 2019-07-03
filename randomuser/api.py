@@ -1,44 +1,37 @@
 import requests
 import urllib.parse
 from .models import User as UserModel
+from abc import ABCMeta, abstractmethod
 
 BASE_URL = "https://randomuser.me"
-USER_PATH = "/api"
-USERS_PATH = "/api/?results={}"
+API_PATH = "/api/"
 
 
 class ApiClient(object):
-    def __init__(self, base_url):
-        self._base_url = base_url
+    _base_url = BASE_URL
+    _api_path = API_PATH
 
-    @property
-    def base_url(self):
-        return self._base_url
+    def get(self, **kwargs):
+        kwargs_to_url = urllib.parse.urlencode(kwargs)
+        path = f'{self._api_path}?{kwargs_to_url}' if kwargs_to_url else self._api_path
 
-    def get(self, path, **kwargs):
-        if kwargs:
-            kwargs_to_url = urllib.parse.urlencode(kwargs)
-            path = f'{path}&{kwargs_to_url}'
-        url = urllib.parse.urljoin(self.base_url, path, kwargs)
-        res = requests.get(url)
-        print(url)
-        return res
+        url = urllib.parse.urljoin(self._base_url, path)
+        return requests.get(url)
 
 
 class Base(object):
-    def __init__(self, base_url, path):
-        self._api = ApiClient(base_url)
-        self._path = path
+    __metaclass__ = ABCMeta
 
+    def __init__(self):
+        self._api = ApiClient()
+
+    @abstractmethod
     def get(self, **kwargs):
-        res = self._api.get(self._path, **kwargs)
+        res = self._api.get(**kwargs)
         return res
 
 
 class User(Base):
-    def __init__(self):
-        super().__init__(BASE_URL, USER_PATH)
-
     def get(self, **kwargs):
         res = super().get(**kwargs)
         user_json_data = res.json().get("results")[0]
@@ -46,10 +39,9 @@ class User(Base):
 
 
 class Users(Base):
-    def __init__(self, num_users=10):
-        path = USERS_PATH.format(num_users)
+    def __init__(self):
+        super().__init__()
         self._users = []
-        super().__init__(BASE_URL, path)
 
     def get(self, **kwargs):
         res = super().get(**kwargs)
@@ -71,11 +63,11 @@ class Users(Base):
         return iter(self._users)
 
     def __repr__(self):
-        return f"{self.users}"
+        return f"{self._users}"
 
 
 def get(results=1, **kwargs):
     if results <= 1:
-        return User(**kwargs).get()
+        return User().get(**kwargs)
     else:
-        return Users(num_users=results).get(**kwargs)
+        return Users().get(results=results, **kwargs)
