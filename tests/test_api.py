@@ -15,7 +15,5 @@ class TestAPI:
         assert isinstance(users[0].name_first, str)
 
     def test_get_list_users_fail(self):
-        users = randomuser.get(results=10)
-        assert isinstance(users, list)
-        assert len(users) is 10
-        assert not isinstance(users[0].name_first, str)
+        users = randomuser.get()
+        assert not isinstance(users, list)
