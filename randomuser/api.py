@@ -49,12 +49,8 @@ class Users(Base):
         self._users = [UserModel(r) for r in users_json_data]
         return self._users
 
-    @property
-    def users(self):
-        return self._users
-
     def __getitem__(self, item):
-        return self.users[item]
+        return self._users[item]
 
     def __len__(self):
         return len(self._users)
